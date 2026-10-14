@@ -64,26 +64,26 @@ if uploaded_file:
         data['Centered_Moving_avg'] = CMv_avg
         data['gap_sales_cma'] = gap
 
-        # Creating empty rows for future predictions
-        empty_rows = pd.DataFrame([[None] * len(data.columns)] * period_to_predict, columns=data.columns)
+# Creating empty rows for future predictions safely
+        empty_rows = pd.DataFrame(index=range(period_to_predict), columns=data.columns)
         empty_rows['t'] = range(int(data['t'].max()) + 1, int(data['t'].max()) + 1 + period_to_predict)
 
         if period == 'Quarter':
-            for i in range(len(empty_rows['Year'])):
+            for i in range(len(empty_rows)):
                 if i < 4:
-                    empty_rows['Year'][i] = int(data['Year'].max()) + 1
-                    empty_rows['Quarter'][i] = data['Quarter'][i]
+                    empty_rows.loc[i, 'Year'] = int(data['Year'].max()) + 1
+                    empty_rows.loc[i, 'Quarter'] = data['Quarter'].iloc[i]
                 else:
-                    empty_rows['Year'][i] = int(empty_rows['Year'][i-4]) + 1
-                    empty_rows['Quarter'][i] = empty_rows['Quarter'][i-4]
+                    empty_rows.loc[i, 'Year'] = int(empty_rows.loc[i-4, 'Year']) + 1
+                    empty_rows.loc[i, 'Quarter'] = empty_rows.loc[i-4, 'Quarter']
         elif period == 'Month':
-            for i in range(len(empty_rows['Year'])):
+            for i in range(len(empty_rows)):
                 if i < 12:
-                    empty_rows['Year'][i] = int(data['Year'].max()) + 1
-                    empty_rows['Month'][i] = data['Month'][i]
+                    empty_rows.loc[i, 'Year'] = int(data['Year'].max()) + 1
+                    empty_rows.loc[i, 'Month'] = data['Month'].iloc[i]
                 else:
-                    empty_rows['Year'][i] = int(empty_rows['Year'][i-12]) + 1
-                    empty_rows['Month'][i] = empty_rows['Month'][i-12]
+                    empty_rows.loc[i, 'Year'] = int(empty_rows.loc[i-12, 'Year']) + 1
+                    empty_rows.loc[i, 'Month'] = empty_rows.loc[i-12, 'Month']
 
         data = pd.concat([data, empty_rows]).reset_index(drop=True)
 
