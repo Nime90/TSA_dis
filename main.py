@@ -7,21 +7,32 @@ from io import BytesIO
 
 # Set up the Streamlit page
 st.title("Time Series Analysis: Manual Method")
-st.write("Remember: in order for this script to work, you need to have alwyas a column called 'Year' and one column called either 'Month' or 'Quarter'. ")
-st.write("Please check that the column where to get the real data, needs to the be the last column in your file. ")
+st.write("Remember: in order for this script to work, you need to have always a column called 'Year' and one column called either 'Month' or 'Quarter'. ")
+st.write("Please check that the column where to get the real data, needs to be the last column in your file. ")
 
 # Upload file
 uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
 if uploaded_file:
-    data = pd.read_excel(uploaded_file)
-    Col_to_pred=data.columns[-1]
+    # Read Excel file structure to get sheet names
+    excel_file = pd.ExcelFile(uploaded_file)
+    sheet_names = excel_file.sheet_names
+    
+    # Let user select a sheet if there are multiple tabs
+    if len(sheet_names) > 1:
+        selected_sheet = st.selectbox("Select sheet/tab:", sheet_names)
+    else:
+        selected_sheet = sheet_names[0]
+        st.info(f"Automatically selected the only available sheet: **{selected_sheet}**")
+        
+    data = pd.read_excel(excel_file, sheet_name=selected_sheet)
+    Col_to_pred = data.columns[-1]
+    
     # Select the prediction period
     period = st.selectbox("Select period:", ["Quarter" , "Month"])
 
-    t=[i+1 for i in data.index]
-    data['t']=t
-    data=data[['t','Year',period,Col_to_pred]]
-
+    t = [i+1 for i in data.index]
+    data['t'] = t
+    data = data[['t', 'Year', period, Col_to_pred]]
 
     years_to_predict = st.number_input("Years to predict", min_value=1, max_value=10, value=None)
     if years_to_predict != None:
@@ -64,7 +75,7 @@ if uploaded_file:
         data['Centered_Moving_avg'] = CMv_avg
         data['gap_sales_cma'] = gap
 
-# Creating empty rows for future predictions safely
+        # Creating empty rows for future predictions safely
         empty_rows = pd.DataFrame(index=range(period_to_predict), columns=data.columns)
         empty_rows['t'] = range(int(data['t'].max()) + 1, int(data['t'].max()) + 1 + period_to_predict)
 
